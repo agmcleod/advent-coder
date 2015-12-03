@@ -12,12 +12,16 @@ fn read_text() -> Result<String> {
 fn main() {
   match read_text() {
     Ok(text) => {
-      let v1: Vec<&str> = text.split("(").collect();
-      let v2: Vec<&str> = text.split(")").collect();
-      let went_up = v1.len() - 1;
-      let went_down = v2.len() - 1;
-      let floor = went_up - went_down;
-      println!("On Floor: {:?}", floor);
+      let characters: Vec<&str> = text.split("").collect();
+      let mut num = 0;
+      for character in characters.iter() {
+        if *character == "(" {
+          num += 1;
+        } else if *character == ")" {
+          num -= 1;
+        }
+      }
+      println!("On Floor: {:?}", num);
     },
     Err(reason) => panic!("{:?}", reason),
   }
