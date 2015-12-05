@@ -15,6 +15,7 @@ fn main() {
       let lines: Vec<&str> = text.split("\n").collect();
       let mut total: u32 = 0;
       let mut line_count = 1;
+      let mut feet_of_ribbon = 0;
       for line in lines.iter() {
         let parts: Vec<&str> = line.split("x").collect();
 
@@ -37,10 +38,17 @@ fn main() {
         let mut sides: Vec<u32> = vec![bottom, side, front];
         sides.sort();
         total += sides[0];
+
+        let mut dimensions: Vec<u32> = vec![l, w, h];
+        dimensions.sort();
+
+        feet_of_ribbon += dimensions[0] * 2 + dimensions[1] * 2 + l*w*h;
+        
         line_count += 1;
       }
 
       println!("Total: {:?}", total);
+      println!("Amount of ribbon: {:?}", feet_of_ribbon);
     },
     Err(error) => panic!("{:?}", error)
   }
