@@ -13,15 +13,20 @@ fn main() {
   match read_text() {
     Ok(text) => {
       let characters: Vec<&str> = text.split("").collect();
-      let mut num = 0;
+      let mut floor = 0;
+      let mut position = 0;
       for character in characters.iter() {
         if *character == "(" {
-          num += 1;
+          floor += 1;
         } else if *character == ")" {
-          num -= 1;
+          floor -= 1;
         }
+        if floor == -1 {
+          break;
+        }
+        position += 1;
       }
-      println!("On Floor: {:?}", num);
+      println!("Position: {:?}", position);
     },
     Err(reason) => panic!("{:?}", reason),
   }
