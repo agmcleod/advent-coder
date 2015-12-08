@@ -64,7 +64,7 @@ fn main() {
                         } else if argument_map.get(&Operation::Not).unwrap().is_match(word) {
 
                         } else if argument_map.get(&Operation::Set).unwrap().is_match(word) {
-
+                            
                         } else if argument_map.get(&Operation::Wire).unwrap().is_match(word) {
                             wire_key = String::from(*word);
                         } else if argument_map.get(&Operation::Value).unwrap().is_match(word) {

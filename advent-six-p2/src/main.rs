@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Result;
-use std::collections::HashMap;
 
 pub enum Command {
     TurnOn,
