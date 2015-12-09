@@ -6,22 +6,26 @@ use std::io::Result;
 use std::collections::HashMap;
 use regex::Regex;
 
-type ArgumentMap = HashMap<Operation, Regex>;
-
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash)]
 enum Operation {
     Lshift,
     Rshift,
     And,
     Or,
-    Not,
-    Set,
-    Wire,
-    Value
+    Not
 }
 
-fn insert_operation(map: &mut ArgumentMap, operation: Operation, value: &str) {
-    map.insert(operation, Regex::new(value).unwrap());
+struct Instruction<'a> {
+    left: Option<&'a str>,
+    operation: Option<&'a Operation>,
+    right: Option< &'a str>,
+    target: Option<&'a str>
+}
+
+impl<'a> Instruction<'a> {
+    fn new(left: Option<&'a str>, operation: Option<&'a Operation>, right: Option<&'a str>, target: Option<&'a str>) -> Instruction<'a> {
+        Instruction{ left: left, operation: operation, right: right, target: target }
+    }
 }
 
 fn read_text() -> Result<String> {
@@ -32,17 +36,14 @@ fn read_text() -> Result<String> {
 }
 
 fn main() {
-    let mut argument_map: ArgumentMap = ArgumentMap::new();
-    insert_operation(&mut argument_map, Operation::Lshift, r"LSHIFT");
-    insert_operation(&mut argument_map, Operation::Rshift, r"RSHIFT");
-    insert_operation(&mut argument_map, Operation::And, r"AND");
-    insert_operation(&mut argument_map, Operation::Or, r"OR");
-    insert_operation(&mut argument_map, Operation::Not, r"NOT");
-    insert_operation(&mut argument_map, Operation::Set, r"->");
-    insert_operation(&mut argument_map, Operation::Wire, r"[a-z]+");
-    insert_operation(&mut argument_map, Operation::Value, r"\d+");
-
-    let wires: HashMap<&str, usize> = HashMap::new();
+    let mut instructions: Vec<&Instruction> = Vec::new();
+    let mut wires: HashMap<&str, i16> = HashMap::new();
+    let operation_map: HashMap<&str, &Operation> = HashMap::new();
+    operation_map.insert("LSHIFT", &Operation::Lshift);
+    operation_map.insert("RSHIFT", &Operation::Rshift);
+    operation_map.insert("AND", &Operation::And);
+    operation_map.insert("OR", &Operation::Or);
+    operation_map.insert("NOT", &Operation::Not);
     match read_text() {
         Ok(text) => {
             let lines: Vec<&str> = text.split("\n").collect();
@@ -50,27 +51,19 @@ fn main() {
                 if *line == "" {
                     continue;
                 } else {
-                    let words: Vec<&str> = line.split(" ").collect();
-                    let mut wire: usize = 0;
-                    let mut wire_key: String = String::new();
-                    let mut amount: usize = 0;
-                    for word in words.iter() {
-                        if argument_map.get(&Operation::Lshift).unwrap().is_match(word) {
-                            wire << amount;
-                        } else if argument_map.get(&Operation::Rshift).unwrap().is_match(word) {
-                            wire >> amount;
-                        } else if argument_map.get(&Operation::And).unwrap().is_match(word) {
+                    let words: Vec<&str> = text.split("\n").collect();
+                    let mut operation: Operation;
 
-                        } else if argument_map.get(&Operation::Not).unwrap().is_match(word) {
-
-                        } else if argument_map.get(&Operation::Set).unwrap().is_match(word) {
-                            
-                        } else if argument_map.get(&Operation::Wire).unwrap().is_match(word) {
-                            wire_key = String::from(*word);
-                        } else if argument_map.get(&Operation::Value).unwrap().is_match(word) {
-                            amount = word.parse().ok().unwrap();
-                        }
+                    if words.len() == 5 {
+                        instructions.push(&Instruction::new(
+                            Some(words[0]), operation_map.get(words[1]), Some(words[2]), Some(words[4])
+                        ));
+                    } else if words.len() == 4 {
+                        instructions.push(Instruction::new(
+                            None(), operation_map.get(words[0]), Some(words[1]), Some(words[3])
+                        ));
                     }
+
                 }
             }
         },
