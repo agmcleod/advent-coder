@@ -4,26 +4,31 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Result;
 use regex::Regex;
+use std::collections::HashMap;
 
 pub fn contains_two_of_a_pair(word: &str) -> bool {
     let mut contains_repeated_pair = false;
-    let mut end_of_pair_index = 1;
+
+    let mut index_map: HashMap<String, usize> = HashMap::new();
 
     let characters = get_characters(word);
+    let mut i = 0;
     for character in characters.iter() {
-        if end_of_pair_index < characters.len() {
-            let pair = [*character, characters[end_of_pair_index]];
-            let mut index = 0;
-            for test_character in characters.iter() {
-                if index > end_of_pair_index && index + 1 < characters.len() {
-                    if *test_character == pair[0] && characters[index + 1] == pair[1] {
-                        contains_repeated_pair = true;
-                    }
-                }
-                index += 1;
-            }
+        if i + 1 >= characters.len() {
+            continue;
         }
-        end_of_pair_index += 1;
+        let pair = format!("{:?}{:?}", *character, characters[i + 1]);
+        if index_map.contains_key(&pair) {
+            if *index_map.get(&pair).unwrap() == i - 1 {
+                continue
+            } else {
+                contains_repeated_pair = true
+            }
+
+        } else {
+            index_map.insert(pair, i);
+        }
+        i += 1;
     }
 
     contains_repeated_pair
