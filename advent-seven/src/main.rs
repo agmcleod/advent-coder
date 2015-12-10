@@ -36,37 +36,39 @@ fn read_text() -> Result<String> {
 }
 
 fn main() {
-    let mut instructions: Vec<&Instruction> = Vec::new();
-    let mut wires: HashMap<&str, i16> = HashMap::new();
-    let operation_map: HashMap<&str, &Operation> = HashMap::new();
-    operation_map.insert("LSHIFT", &Operation::Lshift);
-    operation_map.insert("RSHIFT", &Operation::Rshift);
-    operation_map.insert("AND", &Operation::And);
-    operation_map.insert("OR", &Operation::Or);
-    operation_map.insert("NOT", &Operation::Not);
-    match read_text() {
-        Ok(text) => {
-            let lines: Vec<&str> = text.split("\n").collect();
-            for line in lines.iter() {
-                if *line == "" {
-                    continue;
-                } else {
-                    let words: Vec<&str> = text.split("\n").collect();
-                    let mut operation: Operation;
-
-                    if words.len() == 5 {
-                        instructions.push(&Instruction::new(
-                            Some(words[0]), operation_map.get(words[1]), Some(words[2]), Some(words[4])
-                        ));
-                    } else if words.len() == 4 {
-                        instructions.push(Instruction::new(
-                            None(), operation_map.get(words[0]), Some(words[1]), Some(words[3])
-                        ));
-                    }
-
-                }
-            }
-        },
+    let text = match read_text() {
+        Ok(t) => t,
         Err(err) => panic!("Could not read file {:?}", err)
+    };
+
+    let mut operation_map: HashMap<&str, Operation> = HashMap::new();
+    let mut instructions: Vec<Instruction> = Vec::new();
+    let mut wires: HashMap<&str, i16> = HashMap::new();
+    operation_map.insert("LSHIFT", Operation::Lshift);
+    operation_map.insert("RSHIFT", Operation::Rshift);
+    operation_map.insert("AND", Operation::And);
+    operation_map.insert("OR", Operation::Or);
+    operation_map.insert("NOT", Operation::Not);
+    let lines: Vec<&str> = text.split("\n").collect();
+    for line in lines.iter() {
+        if *line == "" {
+            continue;
+        } else {
+            let words: Vec<&str> = text.split("\n").collect();
+            if words.len() == 5 {
+                instructions.push(Instruction::new(
+                    Some(words[0]), operation_map.get(words[1]), Some(words[2]), Some(words[4])
+                ));
+            } else if words.len() == 4 {
+                instructions.push(Instruction::new(
+                    None, operation_map.get(words[0]), Some(words[1]), Some(words[3])
+                ));
+            } else if words.len() == 3 {
+                instructions.push(Instruction::new(
+                    Some(words[0]), None, None, Some(words[2])
+                ));
+            }
+
+        }
     }
 }
