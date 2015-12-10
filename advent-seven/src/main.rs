@@ -71,4 +71,8 @@ fn main() {
 
         }
     }
+
+    for instruction in instructions.iter() {
+        
+    }
 }
