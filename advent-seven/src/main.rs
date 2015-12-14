@@ -48,21 +48,11 @@ fn read_text() -> Result<String> {
 
 fn run_operation(left: &u16, right: &u16, operation: &Operation) -> u16 {
     match operation {
-        &Operation::Lshift => {
-            left << right
-        },
-        &Operation::Rshift => {
-            left >> right
-        },
-        &Operation::And => {
-            left & right
-        },
-        &Operation::Or => {
-            left | right
-        },
-        &Operation::Not => {
-            !right
-        }
+        &Operation::Lshift => left << right,
+        &Operation::Rshift => left >> right,
+        &Operation::And => left & right,
+        &Operation::Or => left | right,
+        &Operation::Not => !right
     }
 }
 
@@ -154,9 +144,7 @@ fn main() {
                                     wire_to_write = target;
                                     write_value += left;
                                 },
-                                None => {
-                                    panic!("No target {:?}", instruction)
-                                }
+                                None => panic!("No target {:?}", instruction)
                             }
                         }
                     }
