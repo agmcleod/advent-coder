@@ -60,6 +60,7 @@ fn process_wires<'a>(instructions: &Vec<Instruction<'a>>, wires: &mut HashMap<&'
     let num_regex = Regex::new(r"\d+").unwrap();
     let mut processed_lines: Vec<usize> = Vec::new();
     let mut i = 0;
+    let skip_wires: Vec<&str> = wires.keys().cloned().collect();
     loop {
         if i >= instructions.len() {
             i = 0;
@@ -69,6 +70,17 @@ fn process_wires<'a>(instructions: &Vec<Instruction<'a>>, wires: &mut HashMap<&'
             continue
         }
         let instruction = instructions.get(i).unwrap();
+        match instruction.target {
+            Some(wire) => {
+                if skip_wires.contains(&wire) {
+                    processed_lines.push(i);
+                    i += 1;
+                    continue;
+                }
+            },
+            None => {}
+        }
+
         match instruction.left {
             Some(wire) => {
                 let left: u16 = match parse_or_get_from_map(&num_regex, wire, &wires) {
@@ -194,11 +206,11 @@ fn main() {
     process_wires(&instructions, &mut wires);
 
     println!("{:?}", wires.get("a").unwrap());
-    /*let a_value = wires.get("a").unwrap();
+    let a_value = wires.get("a").unwrap();
 
     let mut wires = HashMap::new();
     wires.insert("b", *a_value);
     process_wires(&instructions, &mut wires);
 
-    println!("{:?}", wires.get("a").unwrap()); */
+    println!("{:?}", wires.get("a").unwrap());
 }
