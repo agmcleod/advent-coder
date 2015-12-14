@@ -56,44 +56,7 @@ fn run_operation(left: &u16, right: &u16, operation: &Operation) -> u16 {
     }
 }
 
-fn main() {
-    let text = match read_text() {
-        Ok(t) => t,
-        Err(err) => panic!("Could not read file {:?}", err)
-    };
-
-    let mut operation_map: HashMap<&str, Operation> = HashMap::new();
-    let mut instructions: Vec<Instruction> = Vec::new();
-
-    operation_map.insert("LSHIFT", Operation::Lshift);
-    operation_map.insert("RSHIFT", Operation::Rshift);
-    operation_map.insert("AND", Operation::And);
-    operation_map.insert("OR", Operation::Or);
-    operation_map.insert("NOT", Operation::Not);
-    let lines: Vec<&str> = text.split("\n").collect();
-    for line in lines.iter() {
-        if *line == "" {
-            continue;
-        } else {
-            let words: Vec<&str> = line.split(" ").collect();
-            if words.len() == 5 {
-                instructions.push(Instruction::new(
-                    Some(words[0]), operation_map.get(words[1]), Some(words[2]), Some(words[4])
-                ));
-            } else if words.len() == 4 {
-                instructions.push(Instruction::new(
-                    None, operation_map.get(words[0]), Some(words[1]), Some(words[3])
-                ));
-            } else if words.len() == 3 {
-                instructions.push(Instruction::new(
-                    Some(words[0]), None, None, Some(words[2])
-                ));
-            }
-
-        }
-    }
-
-    let mut wires: HashMap<&str, u16> = HashMap::new();
+fn process_wires<'a>(instructions: &Vec<Instruction<'a>>, wires: &mut HashMap<&'a str, u16>) {
     let num_regex = Regex::new(r"\d+").unwrap();
     let mut processed_lines: Vec<usize> = Vec::new();
     let mut i = 0;
@@ -188,7 +151,54 @@ fn main() {
             break;
         }
     }
-    if wires.contains_key("a") {
-        println!("{:?}", wires.get("a").unwrap());
+}
+
+fn main() {
+    let text = match read_text() {
+        Ok(t) => t,
+        Err(err) => panic!("Could not read file {:?}", err)
+    };
+
+    let mut operation_map: HashMap<&str, Operation> = HashMap::new();
+    let mut instructions: Vec<Instruction> = Vec::new();
+
+    operation_map.insert("LSHIFT", Operation::Lshift);
+    operation_map.insert("RSHIFT", Operation::Rshift);
+    operation_map.insert("AND", Operation::And);
+    operation_map.insert("OR", Operation::Or);
+    operation_map.insert("NOT", Operation::Not);
+    let lines: Vec<&str> = text.split("\n").collect();
+    for line in lines.iter() {
+        if *line == "" {
+            continue;
+        } else {
+            let words: Vec<&str> = line.split(" ").collect();
+            if words.len() == 5 {
+                instructions.push(Instruction::new(
+                    Some(words[0]), operation_map.get(words[1]), Some(words[2]), Some(words[4])
+                ));
+            } else if words.len() == 4 {
+                instructions.push(Instruction::new(
+                    None, operation_map.get(words[0]), Some(words[1]), Some(words[3])
+                ));
+            } else if words.len() == 3 {
+                instructions.push(Instruction::new(
+                    Some(words[0]), None, None, Some(words[2])
+                ));
+            }
+
+        }
     }
+
+    let mut wires: HashMap<&str, u16> = HashMap::new();
+    process_wires(&instructions, &mut wires);
+
+    println!("{:?}", wires.get("a").unwrap());
+    /*let a_value = wires.get("a").unwrap();
+
+    let mut wires = HashMap::new();
+    wires.insert("b", *a_value);
+    process_wires(&instructions, &mut wires);
+
+    println!("{:?}", wires.get("a").unwrap()); */
 }
