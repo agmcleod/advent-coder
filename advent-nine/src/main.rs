@@ -53,11 +53,12 @@ fn parse_lines<'a>(lines: &Vec<&str>) {
 
     for (key, locations) in location_distances.iter() {
         // try each permutation as a start point for this starting location key
-        println!("{:?}", key);
         for location in locations.iter() {
             let mut traversed_locations: Vec<String> = Vec::new();
             let mut distance = location.distance;
-            println!("------{:?}", location.location_key);
+            let mut route = key.clone();
+            route.push_str(" -> ");
+            route.push_str(location.location_key.clone().as_ref());
             traversed_locations.push(String::from(key.clone()));
             traversed_locations.push(String::from(location.location_key.clone()));
             let mut location_key = &location.location_key;
@@ -66,14 +67,15 @@ fn parse_lines<'a>(lines: &Vec<&str>) {
                 for l in locations.iter() {
                     if !traversed_locations.contains(&l.location_key) {
                         distance += l.distance;
-                        println!("      -> {:?} + {:?}", l.location_key, l.distance);
+                        route.push_str(" -> ");
+                        route.push_str(l.location_key.clone().as_ref());
                         traversed_locations.push(String::from(l.location_key.clone()));
                         location_key = &l.location_key;
                         break;
                     }
                 }
                 if traversed_locations.len() == location_distances.keys().len() {
-                    println!("      = {:?}", distance);
+                    println!("{:?} = {:?}\n", route, distance);
                     distances.push(distance);
                     break;
                 }
