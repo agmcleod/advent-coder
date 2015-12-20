@@ -15,6 +15,22 @@ impl Location {
     }
 }
 
+fn append_location(
+    location_distances: &mut HashMap<String, Vec<Location>>,
+    location_one: &String,
+    location_two: &String,
+    distance: usize) {
+    if location_distances.contains_key(location_one) {
+        let mut location_collection = location_distances.get_mut(location_one).unwrap();
+        location_collection.push(Location::new(String::from(location_two.clone()), distance));
+    } else {
+        let mut location_collection: Vec<Location> = Vec::new();
+        let location: Location = Location::new(String::from(location_two.clone()), distance);
+        location_collection.push(location);
+        location_distances.insert(String::from(location_one.clone()), location_collection);
+    }
+}
+
 fn parse_lines<'a>(lines: &Vec<&str>) {
     let mut location_distances: HashMap<String, Vec<Location>> = HashMap::new();
 
@@ -28,62 +44,49 @@ fn parse_lines<'a>(lines: &Vec<&str>) {
         let target_location = String::from(pieces[2]);
         let distance: usize = pieces[4].parse().ok().expect("nope");
 
-        if location_distances.contains_key(&root_location) {
-            let mut location_collection = location_distances.get_mut(&root_location).unwrap();
-            location_collection.push(Location::new(String::from(target_location.clone()), distance));
-        } else {
-            let mut location_collection: Vec<Location> = Vec::new();
-            let location: Location = Location::new(String::from(target_location.clone()), distance);
-            location_collection.push(location);
-            location_distances.insert(String::from(root_location.clone()), location_collection);
-        }
-
-        if location_distances.contains_key(&target_location) {
-            let mut location_collection = location_distances.get_mut(&target_location).unwrap();
-            location_collection.push(Location::new(root_location, distance));
-        } else {
-            let mut location_collection: Vec<Location> = Vec::new();
-            let location: Location = Location::new(root_location, distance);
-            location_collection.push(location);
-            location_distances.insert(target_location, location_collection);
-        }
+        append_location(&mut location_distances, &root_location, &target_location, distance);
+        append_location(&mut location_distances, &target_location, &root_location, distance);
     }
 
     let mut distances: Vec<usize> = Vec::new();
-
     for (key, locations) in location_distances.iter() {
-        // try each permutation as a start point for this starting location key
-        for location in locations.iter() {
-            let mut traversed_locations: Vec<String> = Vec::new();
-            let mut distance = location.distance;
-            let mut route = key.clone();
-            route.push_str(" -> ");
-            route.push_str(location.location_key.clone().as_ref());
-            traversed_locations.push(String::from(key.clone()));
-            traversed_locations.push(String::from(location.location_key.clone()));
-            let mut location_key = &location.location_key;
-            loop {
-                let locations = location_distances.get(location_key).unwrap();
-                for l in locations.iter() {
-                    if !traversed_locations.contains(&l.location_key) {
-                        distance += l.distance;
-                        route.push_str(" -> ");
-                        route.push_str(l.location_key.clone().as_ref());
-                        traversed_locations.push(String::from(l.location_key.clone()));
-                        location_key = &l.location_key;
+        let mut traversed_locations: Vec<String> = Vec::new();
+        traversed_locations.push(String::from(key.as_ref()).clone());
+        distances.extend(get_distances_from_locations(&mut traversed_locations, &location_distances, &key).iter().cloned());
+    }
+
+    distances.sort();
+
+    println!("{:?}", distances[distances.len()-1]);
+}
+
+fn get_distances_from_locations(traversed_locations: &mut Vec<String>, location_distances: &HashMap<String, Vec<Location>>, key: &String) -> Vec<usize> {
+    let mut distances = Vec::new();
+
+    let locations = location_distances.get(key).unwrap();
+    for location in locations {
+        if !traversed_locations.contains(&location.location_key) {
+            if traversed_locations.len() == locations.len() {
+                distances.push(location.distance)
+            } else {
+                let len = traversed_locations.len().clone();
+                traversed_locations.push(String::from(location.location_key.as_ref()));
+                let child_distances = get_distances_from_locations(traversed_locations, location_distances, &location.location_key);
+                let distance = location.distance;
+                for dist in child_distances.iter() {
+                    distances.push(distance + dist);
+                }
+                loop {
+                    if traversed_locations.len() == len {
                         break;
                     }
-                }
-                if traversed_locations.len() == location_distances.keys().len() {
-                    println!("{:?} = {:?}\n", route, distance);
-                    distances.push(distance);
-                    break;
+                    traversed_locations.pop();
                 }
             }
         }
     }
-    distances.sort();
-    println!("{:?}", distances[0]);
+
+    distances
 }
 
 fn read_text() -> Result<String> {
