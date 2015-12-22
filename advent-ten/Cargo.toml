@@ -1,0 +1,4 @@
+[package]
+name = "advent-ten"
+version = "0.1.0"
+authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
