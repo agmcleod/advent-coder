@@ -5,15 +5,6 @@ use rustc_serialize::json::Array;
 use std::fs::File;
 use std::io::Read;
 
-macro_rules! matches(
-    ($e:expr, $p:pat) => (
-        match $e {
-            $p => true,
-            _ => false
-        }
-    )
-);
-
 fn parse_json_object(object: &Object, total: &mut i32) {
     let values = object.values().cloned().collect::<Vec<Json>>();
     let mut has_red = false;
