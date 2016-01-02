@@ -18,7 +18,6 @@ fn should_be_lit(lights: &Vec<Vec<&str>>, row: &i16, cell: &i16, is_on: bool) ->
         if r < 0 || c < 0 || r >= len || c >= len {
             continue
         } else if lights[r as usize][c as usize] == "#" {
-            println!("{}, {}, {:?}", row, cell, lights[*row as usize]);
             lights_on_count += 1;
         }
     }
@@ -60,6 +59,8 @@ fn main() {
         Err(e) => panic!("{:?}", e)
     };
 
+    let text = text.replace("\r", "");
+
     let mut lights = Vec::<Vec<&str>>::new();
     let mut copy = Vec::<Vec<&str>>::new();
 
@@ -74,9 +75,8 @@ fn main() {
     let mut i = 0;
     loop {
         run_iteration(&mut lights);
-        println!("{:?}", lights);
         i += 1;
-        if i >= 1 {
+        if i >= 100 {
             break;
         }
     }
