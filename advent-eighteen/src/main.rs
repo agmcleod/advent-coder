@@ -2,6 +2,11 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Result;
 
+fn is_corner_light(lights: &Vec<Vec<&str>>, row: &i16, cell: &i16) -> bool {
+    let max_index = (lights.len() - 1) as i16;
+    (*row == 0 && (*cell == 0 || *cell == max_index)) || (*row == max_index && (*cell == 0 || *cell == max_index))
+}
+
 fn should_be_lit(lights: &Vec<Vec<&str>>, row: &i16, cell: &i16, is_on: bool) -> bool {
     let mut lights_on_count = 0;
 
@@ -21,7 +26,6 @@ fn should_be_lit(lights: &Vec<Vec<&str>>, row: &i16, cell: &i16, is_on: bool) ->
             lights_on_count += 1;
         }
     }
-
     if is_on {
         lights_on_count == 2 || lights_on_count == 3
     } else {
@@ -42,7 +46,8 @@ fn run_iteration(lights: &mut Vec<Vec<&str>>) {
     for row in lights.iter_mut() {
         let mut c = 0i16;
         for cell in row.iter_mut() {
-            if should_be_lit(&cloned, &r, &c, *cell == "#") {
+            // part 2 condition, if it's a corner, keep it lit
+            if is_corner_light(&cloned, &r, &c) || should_be_lit(&cloned, &r, &c, *cell == "#") {
                 *cell = "#";
             } else {
                 *cell = ".";
@@ -71,6 +76,13 @@ fn main() {
         lights.push(line.split("").filter(|c| *c != "").collect::<Vec<&str>>());
         copy.push(line.split("").filter(|c| *c != "").collect::<Vec<&str>>());
     }
+
+    let max_index = lights.len() - 1;
+    // part 2 overwrite
+    lights[0][0] = "#";
+    lights[0][max_index] = "#";
+    lights[max_index][0] = "#";
+    lights[max_index][max_index] = "#";
 
     let mut i = 0;
     loop {
