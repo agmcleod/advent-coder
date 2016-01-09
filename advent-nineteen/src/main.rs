@@ -21,7 +21,7 @@ fn main() {
 
     let mut molecule = "";
     let mut transform_map: HashMap<&str, Vec<&str>> = HashMap::new();
-    let mut permutations: Vec<&str> = Vec::new();
+    let mut permutations: Vec<String> = Vec::new();
 
     for line in text.split("\n").collect::<Vec<&str>>().iter() {
         if *line == "" {
@@ -41,9 +41,26 @@ fn main() {
     }
 
     for (replace_target, values) in transform_map.iter() {
-        let re = Regex::new(values[0]).unwrap();
-        for c in re.find_iter(molecule) {
-            println!("{:?}", c);
+        let re = Regex::new(replace_target).unwrap();
+        for (start_i, end_i) in re.find_iter(molecule) {
+            for value in values.iter() {
+                let bytes = molecule.as_bytes();
+                let mut bytes = bytes.iter().collect::<Vec<&u8>>();
+                for _ in (start_i..end_i) {
+                    bytes.remove(start_i);
+                }
+                let value_bytes = value.as_bytes();
+                let mut i = 0;
+                for b in value_bytes.iter() {
+                    bytes.insert(start_i + i, b);
+                    i += 1;
+                }
+
+                let permutation = String::from_utf8(bytes.iter().map(|&b| *b).collect()).unwrap();
+                if !permutations.contains(&permutation) {
+                    permutations.push(permutation);
+                }
+            }
         }
     }
 
