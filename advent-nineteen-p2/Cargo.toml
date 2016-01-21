@@ -1,0 +1,7 @@
+[package]
+name = "advent-nineteen-p2"
+version = "0.1.0"
+authors = ["Aaron McLeod <aaron@uken.com>"]
+
+[dependencies]
+regex = "0.1"
