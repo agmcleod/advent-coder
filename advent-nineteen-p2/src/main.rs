@@ -6,13 +6,13 @@ use std::io::Result;
 use std::io::prelude::*;
 use std::collections::HashMap;
 use regex::Regex;
-use rand::Rang;
+use rand::distributions::{IndependentSample, Range};
 
-fn get_potential_replacements(transform_map: &HashMap<&str, &str>, value: &str) -> Vec<&str> {
-    let mut replacements = Vec::new();
+fn get_potential_replacements(transform_map: &HashMap<String, String>, value: &str) -> Vec<String> {
+    let mut replacements = Vec::<String>::new();
     for (key, _) in transform_map.iter() {
-        if replacements.contains(key) {
-            replacements.push(key);
+        if value.contains(key) {
+            replacements.push(key.clone());
         }
     }
 
@@ -35,32 +35,29 @@ fn replace_permutation(string_to_replace: &str, value: &str, start_i: &usize, en
     String::from_utf8(bytes.iter().map(|&b| *b).collect()).unwrap()
 }
 
-fn try_replacements(transform_map: &HashMap<&str, &str>, value: &str, permutations: &mut Vec<String>) -> usize {
+fn try_replacements(transform_map: &HashMap<String, String>, value: &str, permutations: &mut Vec<String>, moleocule: &str) -> usize {
     let replacements = get_potential_replacements(transform_map, value);
-    let rand_index =
-    for replacement in replacements.iter() {
-        if value.contains(key) {
-            let re = Regex::new(key).unwrap();
-            for (start_i, end_i) in re.find_iter(value) {
-                let modified_value = replace_permutation(&value, &replacement, &start_i, &end_i);
-                *count += 1;
-                if modified_value != target_value &&
-                !permutations.contains(&modified_value) &&
-                modified_value.len() < target_value.len() {
-                    let copied_value = modified_value.clone();
-                    permutations.push(copied_value);
-                    for (key, values) in transform_map.iter() {
-                        if modified_value.contains(key) {
-                            let mut cloned_count = count.clone();
-                            return 1 + try_replacements(
-                                transform_map, &modified_value, permutations
-                            );
-                        }
-                    }
-                } else if modified_value == target_value {
-                    steps.push(*count);
-                }
-            }
+    if replacements.len() == 0 {
+        try_replacements(transform_map, moleocule, permutations, moleocule)
+    } else {
+        let mut rng = rand::thread_rng();
+
+        let mut rand_index = 0;
+        if replacements.len() > 1 {
+            rand_index = Range::new(0, replacements.len() - 1).ind_sample(&mut rng);
+        }
+        let replacement = replacements.get(rand_index).unwrap();
+        let re = Regex::new(replacement).unwrap();
+        let (start_i, end_i) = re.find(value).unwrap();
+        let modified_value = replace_permutation(&value, transform_map.get(replacement).unwrap(), &start_i, &end_i);
+        if modified_value != "e" && !permutations.contains(&modified_value) {
+            let copied_value = modified_value.clone();
+            permutations.push(copied_value);
+            return 1 + try_replacements(transform_map, &modified_value, permutations, moleocule)
+        } else if modified_value == "e" {
+            return 1
+        } else {
+            try_replacements(transform_map, &modified_value, permutations, moleocule)
         }
     }
 }
@@ -79,7 +76,7 @@ fn main() {
     };
 
     let mut molecule = "";
-    let mut transform_map: HashMap<&str, &str> = HashMap::new();
+    let mut transform_map: HashMap<String, String> = HashMap::new();
     let mut permutations = Vec::<String>::new();
 
     for line in text.split("\n").collect::<Vec<&str>>().iter() {
@@ -89,11 +86,11 @@ fn main() {
 
         if line.contains("=>") {
             let parts = line.split(" => ").collect::<Vec<&str>>();
-            transform_map.insert(parts[1], parts[0]);
+            transform_map.insert(String::from(parts[1]), String::from(parts[0]));
         } else {
             molecule = line.clone();
         }
     }
 
-    println!("{:?}", try_replacements(&transform_map, &molecule, &replacements, &mut permutations));
+    println!("{:?}", try_replacements(&transform_map, &molecule, &mut permutations, molecule));
 }
