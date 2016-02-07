@@ -1,13 +1,25 @@
 fn apply_presents_to_house(house_num: &usize, min_presents: &usize) -> bool {
     let sqrt = (*house_num as f32).sqrt() as usize;
-    let result = (2..sqrt + 1).fold(house_num + 1, |acc, i| {
+    let result = (1..sqrt + 1).fold(0, |acc, i| {
         if house_num % i == 0 {
-            acc + i + house_num / i
+            if house_num / i <= 50 {
+                if i <= 50 {
+                    acc + i + house_num / i
+                } else {
+                    acc + i
+                }
+            } else {
+                if i <= 50 {
+                    acc + house_num / i
+                } else {
+                    acc
+                }
+            }
         } else {
             acc
         }
     });
-    10 *
+    11 *
     if sqrt * sqrt == *house_num {
         result - sqrt
     } else {
