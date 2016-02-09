@@ -69,7 +69,10 @@ fn buy_items<'a>(weapons: &'a Vec<Item>, armor: &'a Vec<Item>, rings: &'a Vec<It
         bump_weapons_or_armor(buy_item_state, armor);
     }
 
-
+    if buy_item_state.ring_count == 2 && buy_item_state.rings_index_two == rings.len() {
+        buy_item_state.rings_index_two = 0;
+        buy_item_state.rings_index_one += 1;
+    }
 
     if buy_item_state.weapon_index == weapons.len() {
         if buy_item_state.ring_count < 2 {
