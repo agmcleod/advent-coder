@@ -44,17 +44,7 @@ impl BuyItemState {
     }
 }
 
-fn buy_items<'a>(weapons: &'a Vec<Item>, armor: &'a Vec<Item>, rings: &'a Vec<Item>, buy_item_state: &mut BuyItemState) -> Vec<&'a Item> {
-    let mut items = Vec::<&Item>::new();
-
-    if buy_item_state.ring_count == 1 && buy_item_state.rings_index_one == rings.len() {
-        buy_item_state.rings_index_one = 0;
-    }
-
-    if buy_item_state.ring_count == 2 && buy_item_state.rings_index_one == rings.len() && buy_item_state.rings_index_two == rings.len() {
-
-    }
-
+fn bump_weapons_or_armor<'a>(buy_item_state: &mut BuyItemState, armor: &'a Vec<Item>) {
     if buy_item_state.use_armor {
         buy_item_state.armor_index += 1;
 
@@ -65,31 +55,52 @@ fn buy_items<'a>(weapons: &'a Vec<Item>, armor: &'a Vec<Item>, rings: &'a Vec<It
     } else {
         buy_item_state.weapon_index += 1;
     }
+}
+
+fn buy_items<'a>(weapons: &'a Vec<Item>, armor: &'a Vec<Item>, rings: &'a Vec<Item>, buy_item_state: &mut BuyItemState) -> Vec<&'a Item> {
+    let mut items = Vec::<&Item>::new();
+
+    if buy_item_state.ring_count == 1 && buy_item_state.rings_index_one == rings.len() {
+        buy_item_state.rings_index_one = 0;
+        bump_weapons_or_armor(buy_item_state, armor);
+    }
+
+    if buy_item_state.ring_count == 2 && buy_item_state.rings_index_one == rings.len() && buy_item_state.rings_index_two == rings.len() {
+        bump_weapons_or_armor(buy_item_state, armor);
+    }
+
+
 
     if buy_item_state.weapon_index == weapons.len() {
-        if buy_item_state.ring_purchase_count < 2 {
-            buy_item_state.ring_purchase_count += 1;
-        } else if !buy_item_state.use_armor {
-            buy_item_state.use_armor = true;
+        if buy_item_state.ring_count < 2 {
+            if !buy_item_state.use_armor {
+                buy_item_state.use_armor = true;
+            } else {
+                buy_item_state.use_armor = false;
+                buy_item_state.ring_count += 1;
+            }
         } else {
             buy_item_state.done = true;
         }
 
         buy_item_state.armor_index = 0;
         buy_item_state.weapon_index = 0;
-        buy_item_state.rings_index = 0;
+        buy_item_state.rings_index_one = 0;
+        buy_item_state.rings_index_two = 1;
         items
     } else {
         items.push(weapons.get(buy_item_state.weapon_index).unwrap());
         if buy_item_state.use_armor {
             items.push(armor.get(buy_item_state.armor_index).unwrap());
         }
-        if buy_item_state.ring_purchase_count {
-            items.push(rings.get(buy_item_state.rings_index + 1).unwrap());
+        if buy_item_state.ring_count >= 1 {
+            items.push(rings.get(buy_item_state.rings_index_one).unwrap());
+            buy_item_state.rings_index_one += 1;
         }
-
-        buy_item_state.rings_index += 1;
-
+        if buy_item_state.ring_count == 2 {
+            items.push(rings.get(buy_item_state.rings_index_two).unwrap());
+            buy_item_state.rings_index_two += 1;
+        }
         items
     }
 }
