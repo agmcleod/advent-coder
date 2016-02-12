@@ -8,7 +8,7 @@ struct Boss {
     hp: i32,
     damage: i32
 }
-
+#[derive(Debug)]
 struct Buff<'a> {
     spell: &'a Spell,
     duration: i32
@@ -111,15 +111,26 @@ fn buff_is_active(buffs: &Vec<Buff>, name: &String) -> bool {
 fn choose_spell<'a>(spells: &'a HashMap<String, Spell>, spell_keys: &Vec<String>, player: &Player, boss: &Boss, buffs: &Vec<Buff>) -> &'a Spell {
     if player.mana >= 229 && player.mana <= 229 + 173 && !buff_is_active(buffs, &String::from("recharge")) {
         spells.get("recharge").unwrap()
-    } else if !buff_is_active(buffs, &String::from("shield")) {
-        spells.get("shield").unwrap()
+    } else if buffs.len() == 0 {
+        let mut rng = rand::thread_rng();
+        let mut rand_index = 0;
+        loop {
+            rand_index = Range::new(0, spell_keys.len()).ind_sample(&mut rng);
+            let spell = spells.get(&spell_keys[rand_index]).unwrap();
+            if player.mana - spell.mana_cost > 0 && !buff_is_active(buffs, &spell.name) {
+                break
+            }
+        }
+
+        spells.get(&spell_keys[rand_index]).unwrap()
     } else {
         let mut rng = rand::thread_rng();
         let mut rand_index = 0;
         loop {
             rand_index = Range::new(0, spell_keys.len()).ind_sample(&mut rng);
             let spell = spells.get(&spell_keys[rand_index]).unwrap();
-            if spell.spell_effects.iter().filter(|effect| effect.duration > 0).collect::<Vec<_>>().len() == 0 || !buff_is_active(buffs, &spell.name) {
+            if player.mana - spell.mana_cost > 0 &&
+            spell.spell_effects.iter().filter(|effect| effect.duration > 0).collect::<Vec<_>>().len() == 0 {
                 break
             }
         }
