@@ -172,9 +172,6 @@ fn main() {
             let spell = choose_spell(&spells, &spell_keys, &player, &boss, &buffs);
             if spell.duration > 0 {
                 buffs.push(Buff::new(spell, spell.duration));
-                if spell.name == "shield" {
-                    player.armor = spell.spell_effects[0].armor;
-                }
             } else {
                 for spell_effect in spell.spell_effects.iter() {
                     apply_spell_effect(&mut player, &mut boss, spell_effect);
