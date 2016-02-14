@@ -76,12 +76,6 @@ impl SpellEffect {
     }
 }
 
-fn apply_single_buff(player: &mut Player, boss: &mut Boss, buff: &Buff) {
-    for spell_effect in buff.spell.spell_effects.iter() {
-        apply_spell_effect(player, boss, spell_effect);
-    }
-}
-
 fn apply_spell_effect(player: &mut Player, boss: &mut Boss, spell_effect: &SpellEffect) {
     match spell_effect.target {
         Target::PLAYER => {
@@ -96,11 +90,14 @@ fn apply_spell_effect(player: &mut Player, boss: &mut Boss, spell_effect: &Spell
 }
 
 fn apply_buffs<'a>(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff<'a>>) {
-    // println!("{:?}", buffs.iter().map(|buff| buff.spell.name.clone()).collect::<Vec<_>>());
     player.armor = 0;
     for buff in buffs.iter_mut() {
         buff.duration -= 1;
-        apply_single_buff(player, boss, buff);
+        if buff.duration > 0 || buff.spell.name != "shield" {
+            for spell_effect in buff.spell.spell_effects.iter() {
+                apply_spell_effect(player, boss, spell_effect);
+            }
+        }
     }
     buffs.retain(|buff| buff.duration > 0);
 }
@@ -110,27 +107,22 @@ fn buff_is_active(buffs: &Vec<Buff>, name: &String) -> bool {
 }
 
 fn choose_spell<'a>(spells: &'a HashMap<String, Spell>, spell_keys: &Vec<String>, player: &Player, boss: &Boss, buffs: &Vec<Buff>) -> &'a Spell {
-    if spells.values().min_by_key(|st| st.mana_cost).unwrap().mana_cost > player.mana {
+    if player.mana < 53 {
         // return any spell, as we are out of mana anyways
-        spells.get(&spell_keys[0]).unwrap()
+        spells.get("magic_missle").unwrap()
     } else {
-        let recharge = spells.get("recharge").unwrap();
-        if player.mana >= recharge.mana_cost && !buff_is_active(buffs, &recharge.name) {
-            recharge
-        } else {
-            let mut rng = rand::thread_rng();
-            let mut rand_index;
-            let range = Range::new(0, spells.len());
-            loop {
-                rand_index = range.ind_sample(&mut rng);
-                let spell = spells.get(&spell_keys[rand_index]).unwrap();
-                if spell.mana_cost <= player.mana && !buff_is_active(buffs, &spell.name) {
-                    break;
-                }
+        let mut rng = rand::thread_rng();
+        let mut rand_index;
+        let range = Range::new(0, spells.len());
+        loop {
+            rand_index = range.ind_sample(&mut rng);
+            let spell = spells.get(&spell_keys[rand_index]).unwrap();
+            if spell.mana_cost <= player.mana && !buff_is_active(buffs, &spell.name) {
+                break;
             }
-
-            spells.get(&spell_keys[rand_index]).unwrap()
         }
+
+        spells.get(&spell_keys[rand_index]).unwrap()
     }
 }
 
@@ -180,6 +172,9 @@ fn main() {
             let spell = choose_spell(&spells, &spell_keys, &player, &boss, &buffs);
             if spell.duration > 0 {
                 buffs.push(Buff::new(spell, spell.duration));
+                if spell.name == "shield" {
+                    player.armor = spell.spell_effects[0].armor;
+                }
             } else {
                 for spell_effect in spell.spell_effects.iter() {
                     apply_spell_effect(&mut player, &mut boss, spell_effect);
