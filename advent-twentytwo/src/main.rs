@@ -95,6 +95,7 @@ fn apply_spell_effect(player: &mut Player, boss: &mut Boss, spell_effect: &Spell
 }
 
 fn apply_buffs<'a>(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff<'a>>) {
+    // println!("{:?}", buffs.iter().map(|buff| buff.spell.name.clone()).collect::<Vec<_>>());
     player.armor = 0;
     for buff in buffs.iter_mut() {
         buff.duration -= 1;
@@ -108,29 +109,34 @@ fn buff_is_active(buffs: &Vec<Buff>, name: &String) -> bool {
 }
 
 fn choose_spell<'a>(spells: &'a HashMap<String, Spell>, spell_keys: &Vec<String>, player: &Player, boss: &Boss, buffs: &Vec<Buff>) -> &'a Spell {
-    // let magic_missle = spells.get("magic_missle").unwrap();
-    // let drain = spells.get("drain").unwrap();
-    // let poison = spells.get("poison").unwrap();
-    // let shield = spells.get("shield").unwrap();
-    // let recharge = spells.get("recharge").unwrap();
-
-    if player.mana >= 229 && !buff_is_active(buffs, &String::from("recharge")) {
-        spells.get("recharge").unwrap()
-    } else if player.hp < 30 && boss.hp < 15 {
-        spells.get("drain").unwrap()
-    } else if spells.values().min_by_key(|st| st.mana_cost).unwrap().mana_cost > player.mana {
+    if spells.values().min_by_key(|st| st.mana_cost).unwrap().mana_cost > player.mana {
+        // return any spell, as we are out of mana anyways
         spells.get(&spell_keys[0]).unwrap()
-    } else if !buff_is_active(buffs, &String::from("shield")) {
-        spells.get("shield").unwrap()
-    } else if !buff_is_active(buffs, &String::from("poison")) {
-        spells.get("poison").unwrap()
     } else {
-        spells.get("magic_missle").unwrap()
+        let recharge = spells.get("recharge").unwrap();
+        let poison = spells.get("poison").unwrap();
+        if player.mana >= recharge.mana_cost && !buff_is_active(buffs, &recharge.name) {
+            recharge
+        } else if player.mana >= poison.mana_cost && !buff_is_active(buffs, &poison.name) {
+            poison
+        } else {
+            let mut rng = rand::thread_rng();
+            let mut rand_index;
+            let range = Range::new(0, spells.len());
+            loop {
+                rand_index = range.ind_sample(&mut rng);
+                let spell = spells.get(&spell_keys[rand_index]).unwrap();
+                if spell.mana_cost <= player.mana && !buff_is_active(buffs, &spell.name) {
+                    break;
+                }
+            }
+
+            spells.get(&spell_keys[rand_index]).unwrap()
+        }
     }
 }
 
 fn reset(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff>) {
-    println!("{:?} {:?}", player.hp, boss.hp);
     player.hp = 50;
     player.mana = 500;
     boss.hp = 71;
@@ -170,26 +176,25 @@ fn main() {
     let mut mana = 0;
     loop {
         if player.hp > 0 {
-            // println!("{:?}", buffs.iter().map(|buff| buff.spell.name.clone()).collect::<Vec<_>>());
+            // start player turn
             apply_buffs(&mut player, &mut boss, &mut buffs);
             let spell = choose_spell(&spells, &spell_keys, &player, &boss, &buffs);
             for spell_effect in spell.spell_effects.iter() {
                 if spell_effect.duration > 0 {
-                    let mut buff = Buff::new(spell, spell_effect.duration);
-                    buff.duration -= 1;
-                    apply_single_buff(&mut player, &mut boss, &buff);
-                    buffs.push(buff);
+                    buffs.push(Buff::new(spell, spell_effect.duration));
                 } else {
                     apply_spell_effect(&mut player, &mut boss, spell_effect);
                 }
             }
             player.mana -= spell.mana_cost;
+            mana += spell.mana_cost;
             if player.mana < 0 {
                 reset(&mut player, &mut boss, &mut buffs);
                 mana = 0;
                 continue
             }
-            mana += spell.mana_cost;
+            // start boss turn
+            apply_buffs(&mut player, &mut boss, &mut buffs);
             if boss.hp > 0 {
                 let mut damage = boss.damage - player.armor;
                 if damage < 1 {
@@ -198,12 +203,13 @@ fn main() {
                 player.hp -= damage;
             } else {
                 println!("Mana total: {:?}", mana);
+                println!("{:?} {:?}", player.hp, boss.hp);
                 break;
             }
         } else {
             reset(&mut player, &mut boss, &mut buffs);
             mana = 0;
-            break
+            continue
         }
     }
 }
