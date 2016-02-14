@@ -100,7 +100,6 @@ fn apply_buffs<'a>(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff<'a
         buff.duration -= 1;
         apply_single_buff(player, boss, buff);
     }
-
     buffs.retain(|buff| buff.duration > 0);
 }
 
@@ -109,37 +108,29 @@ fn buff_is_active(buffs: &Vec<Buff>, name: &String) -> bool {
 }
 
 fn choose_spell<'a>(spells: &'a HashMap<String, Spell>, spell_keys: &Vec<String>, player: &Player, boss: &Boss, buffs: &Vec<Buff>) -> &'a Spell {
-    if player.mana >= 229 && player.mana <= 229 + 173 && !buff_is_active(buffs, &String::from("recharge")) {
+    // let magic_missle = spells.get("magic_missle").unwrap();
+    // let drain = spells.get("drain").unwrap();
+    // let poison = spells.get("poison").unwrap();
+    // let shield = spells.get("shield").unwrap();
+    // let recharge = spells.get("recharge").unwrap();
+
+    if player.mana >= 229 && !buff_is_active(buffs, &String::from("recharge")) {
         spells.get("recharge").unwrap()
-    } else if buffs.len() == 0 {
-        let mut rng = rand::thread_rng();
-        let mut rand_index = 0;
-        loop {
-            rand_index = Range::new(0, spell_keys.len()).ind_sample(&mut rng);
-            let spell = spells.get(&spell_keys[rand_index]).unwrap();
-            if player.mana - spell.mana_cost > 0 && !buff_is_active(buffs, &spell.name) {
-                break
-            }
-        }
-
-        spells.get(&spell_keys[rand_index]).unwrap()
+    } else if player.hp < 30 && boss.hp < 15 {
+        spells.get("drain").unwrap()
+    } else if spells.values().min_by_key(|st| st.mana_cost).unwrap().mana_cost > player.mana {
+        spells.get(&spell_keys[0]).unwrap()
+    } else if !buff_is_active(buffs, &String::from("shield")) {
+        spells.get("shield").unwrap()
+    } else if !buff_is_active(buffs, &String::from("poison")) {
+        spells.get("poison").unwrap()
     } else {
-        let mut rng = rand::thread_rng();
-        let mut rand_index = 0;
-        loop {
-            rand_index = Range::new(0, spell_keys.len()).ind_sample(&mut rng);
-            let spell = spells.get(&spell_keys[rand_index]).unwrap();
-            if player.mana - spell.mana_cost > 0 &&
-            spell.spell_effects.iter().filter(|effect| effect.duration > 0).collect::<Vec<_>>().len() == 0 {
-                break
-            }
-        }
-
-        spells.get(&spell_keys[rand_index]).unwrap()
+        spells.get("magic_missle").unwrap()
     }
 }
 
 fn reset(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff>) {
+    println!("{:?} {:?}", player.hp, boss.hp);
     player.hp = 50;
     player.mana = 500;
     boss.hp = 71;
@@ -179,11 +170,14 @@ fn main() {
     let mut mana = 0;
     loop {
         if player.hp > 0 {
+            // println!("{:?}", buffs.iter().map(|buff| buff.spell.name.clone()).collect::<Vec<_>>());
             apply_buffs(&mut player, &mut boss, &mut buffs);
             let spell = choose_spell(&spells, &spell_keys, &player, &boss, &buffs);
             for spell_effect in spell.spell_effects.iter() {
                 if spell_effect.duration > 0 {
-                    let buff = Buff::new(spell, spell_effect.duration);
+                    let mut buff = Buff::new(spell, spell_effect.duration);
+                    buff.duration -= 1;
+                    apply_single_buff(&mut player, &mut boss, &buff);
                     buffs.push(buff);
                 } else {
                     apply_spell_effect(&mut player, &mut boss, spell_effect);
@@ -191,6 +185,8 @@ fn main() {
             }
             player.mana -= spell.mana_cost;
             if player.mana < 0 {
+                reset(&mut player, &mut boss, &mut buffs);
+                mana = 0;
                 continue
             }
             mana += spell.mana_cost;
@@ -201,11 +197,13 @@ fn main() {
                 }
                 player.hp -= damage;
             } else {
-                println!("{:?}", mana);
+                println!("Mana total: {:?}", mana);
+                break;
             }
         } else {
             reset(&mut player, &mut boss, &mut buffs);
             mana = 0;
+            break
         }
     }
 }
