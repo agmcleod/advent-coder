@@ -80,7 +80,9 @@ fn apply_spell_effect(player: &mut Player, boss: &mut Boss, spell_effect: &Spell
     match spell_effect.target {
         Target::PLAYER => {
             player.hp += spell_effect.health;
-            player.armor = spell_effect.armor;
+            if spell_effect.armor > 0 {
+                player.armor = spell_effect.armor;
+            }
             player.mana += spell_effect.mana;
         },
         Target::BOSS => {
@@ -90,6 +92,7 @@ fn apply_spell_effect(player: &mut Player, boss: &mut Boss, spell_effect: &Spell
 }
 
 fn apply_buffs<'a>(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff<'a>>) {
+    // println!("{:?}", buffs.iter().map(|buff| format!("{:?} {:?}", buff.spell.name.clone(), buff.duration)).collect::<Vec<_>>());
     player.armor = 0;
     for buff in buffs.iter_mut() {
         buff.duration -= 1;
@@ -136,7 +139,6 @@ fn reset(player: &mut Player, boss: &mut Boss, buffs: &mut Vec<Buff>) {
 fn main() {
     let mut boss = Boss{ hp: 71, damage: 10 };
     let mut player = Player::new();
-    let mut min_hp = 10000;
 
     let mut magic_missle = Spell::new("magic_missle", 53, 0);
     magic_missle.add_spell_effect(SpellEffect::new(Target::BOSS, -4));
@@ -165,7 +167,10 @@ fn main() {
     spells.insert(recharge.name.clone(), recharge);
     let mut buffs = Vec::<Buff>::new();
     let mut mana = 0;
+    let mut totals: Vec<i32> = Vec::new();
+    let mut lowest_total = 10000000;
     loop {
+        player.hp -= 1; // pt 2
         if player.hp > 0 {
             // start player turn
             apply_buffs(&mut player, &mut boss, &mut buffs);
@@ -187,22 +192,19 @@ fn main() {
             // start boss turn
             apply_buffs(&mut player, &mut boss, &mut buffs);
             if boss.hp > 0 {
-                let mut damage = boss.damage - player.armor;
-                if damage < 1 {
-                    damage = 1;
-                }
+                let damage = cmp::max(boss.damage - player.armor, 1);
                 player.hp -= damage;
             } else {
-                println!("Mana total: {:?}", mana);
-                println!("{:?} {:?}", player.hp, boss.hp);
-                break;
+                if !totals.contains(&mana) {
+                    totals.push(mana);
+                    if lowest_total > mana {
+                        lowest_total = mana.clone();
+                        println!("{:?}", lowest_total);
+                    }
+                }
+                continue
             }
         } else {
-            let t = cmp::min(min_hp, boss.hp);
-            if t < min_hp {
-                min_hp = t;
-                println!("{:?}", min_hp);
-            }
             reset(&mut player, &mut boss, &mut buffs);
             mana = 0;
             continue
