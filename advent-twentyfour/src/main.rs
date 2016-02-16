@@ -25,7 +25,26 @@ fn main() {
         weights.push(line.parse().ok().expect("nope"));
     }
 
-    let weight_per_container = weights.iter().fold(0, |s, &w| s + w) / 3;
+    let weight_per_container = weights.iter().fold(0, |sum, &w| sum + w) / 3;
+
+    let mut start_index = weights.len() - 1;
+    let mut index = weights.len() - 1;
+    let mut collected_indexes: Vec<usize> = vec![index];
+
+    loop {
+        let collected_sum = collected_indexes.iter().map(|i| weights[*i]).fold(0, |sum, w| sum + w);
+        if collected_sum < weight_per_container {
+            index -= 1;
+            collected_indexes.push(index);
+        } else if collected_sum > weight_per_container {
+            start_index -= 1;
+            index = start_index;
+            collected_indexes.clear();
+            collected_indexes.push(index);
+        } else {
+
+        }
+    }
 
     println!("{:?}", weight_per_container);
 }
