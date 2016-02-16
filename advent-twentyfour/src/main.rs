@@ -30,6 +30,7 @@ fn main() {
     let mut start_index = weights.len() - 1;
     let mut index = weights.len() - 1;
     let mut collected_indexes: Vec<usize> = vec![index];
+    let mut packed_indexes: Vec<usize> = Vec::new();
 
     loop {
         let collected_sum = collected_indexes.iter().map(|i| weights[*i]).fold(0, |sum, w| sum + w);
@@ -42,7 +43,9 @@ fn main() {
             collected_indexes.clear();
             collected_indexes.push(index);
         } else {
-
+            for index in collected_indexes.iter() {
+                packed_indexes.push(index.clone());
+            }
         }
     }
 
