@@ -34,15 +34,25 @@ fn main() {
 
     let mut current_container_index = 0;
 
+    let mut start_index = 0;
+
     let mut weights_copy = weights.clone();
 
     loop {
         let sum = collected.iter().fold(0, |s, &w| { s + w });
         if sum < weight_per_container {
+            if index >= weights_copy.len() {
+                start_index += 1;
+                index = start_index;
+                while collected.len() > 0 {
+                    weights_copy.push(collected.pop().unwrap());
+                }
+
+                weights_copy.sort();
+                weights_copy.reverse();
+            }
             collected.push(weights_copy[index]);
-            println!("{:?}", weights_copy[index]);
             weights_copy.remove(index);
-            println!("{:?}", weights_copy);
         } else if sum > weight_per_container {
             if weights_copy.len() == 0 {
                 weights_copy.push(collected.pop().unwrap());
@@ -62,6 +72,7 @@ fn main() {
             // println!("{:?}", weights_copy);
             current_container_index += 1;
             if current_container_index == 2 {
+                println!("{:?}", weights_copy);
                 println!("{:?}", containers);
                 println!("{:?}", containers[0].iter().fold(1, |factor, value| factor * value));
                 break
