@@ -28,55 +28,69 @@ fn main() {
     weights.reverse();
     let weight_per_container = weights.iter().fold(0, |sum, &w| sum + w) / 3;
 
-    let mut index = 0;
-    let mut collected: Vec<usize> = Vec::new();
-    let mut containers: Vec<Vec<usize>> = vec![Vec::new(), Vec::new(), Vec::new()];
+    let mut totals = Vec::<usize>::new();
 
-    let mut current_container_index = 0;
+    for i in 0..weights.len() {
+        let mut index = i;
+        let mut collected: Vec<usize> = Vec::new();
+        let mut containers: Vec<Vec<usize>> = vec![Vec::new(), Vec::new(), Vec::new()];
 
-    let mut start_index = 0;
+        let mut current_container_index = 0;
 
-    let mut weights_copy = weights.clone();
+        let mut start_index = 0;
 
-    loop {
-        let sum = collected.iter().fold(0, |s, &w| { s + w });
-        if sum < weight_per_container {
-            if index >= weights_copy.len() {
-                start_index += 1;
-                index = start_index;
-                while collected.len() > 0 {
+        let mut weights_copy = weights.clone();
+
+        loop {
+            let sum = collected.iter().fold(0, |s, &w| { s + w });
+            if sum < weight_per_container {
+                if index >= weights_copy.len() {
+                    start_index += 1;
+                    if start_index >= weights_copy.len() {
+                        break
+                    }
+                    index = start_index;
+                    while collected.len() > 0 {
+                        weights_copy.push(collected.pop().unwrap());
+                    }
+
+                    weights_copy.sort();
+                    weights_copy.reverse();
+                }
+                collected.push(match weights_copy.get(index) {
+                    Some(r) => r.clone(),
+                    None => panic!("could not get weights_copy[{:?}] start_index: {:?}", index, start_index)
+                });
+                weights_copy.remove(index);
+            } else if sum > weight_per_container {
+                if weights_copy.len() == 0 {
                     weights_copy.push(collected.pop().unwrap());
+                } else {
+                    weights_copy.insert(0, collected.pop().unwrap());
                 }
-
-                weights_copy.sort();
-                weights_copy.reverse();
-            }
-            collected.push(weights_copy[index]);
-            weights_copy.remove(index);
-        } else if sum > weight_per_container {
-            if weights_copy.len() == 0 {
-                weights_copy.push(collected.pop().unwrap());
+                index += 1;
             } else {
-                weights_copy.insert(0, collected.pop().unwrap());
-            }
-            index += 1;
-        } else {
-            index = 0;
-            {
-                let mut container = containers.get_mut(current_container_index).unwrap();
-                for weight in collected.iter() {
-                    container.push(weight.clone());
+                index = 0;
+                {
+                    let mut container = containers.get_mut(current_container_index).unwrap();
+                    for weight in collected.iter() {
+                        container.push(weight.clone());
+                    }
                 }
-            }
-            collected.clear();
-            // println!("{:?}", weights_copy);
-            current_container_index += 1;
-            if current_container_index == 2 {
-                println!("{:?}", weights_copy);
-                println!("{:?}", containers);
-                println!("{:?}", containers[0].iter().fold(1, |factor, value| factor * value));
-                break
+                collected.clear();
+                // println!("{:?}", weights_copy);
+                current_container_index += 1;
+                if current_container_index == 2 {
+                    containers.sort_by(|a, b| {
+                        a.len().cmp(&b.len())
+                    });
+                    totals.push(containers.get(1).unwrap().iter().fold(1, |factor, value| factor * value));
+                    break
+                }
             }
         }
     }
+
+    totals.sort();
+    println!("{:?}", totals);
 }
