@@ -28,8 +28,6 @@ fn main() {
     weights.reverse();
     let weight_per_container = weights.iter().fold(0, |sum, &w| sum + w) / 3;
 
-    let mut totals = Vec::<usize>::new();
-
     for i in 0..weights.len() {
         let mut index = i;
         let mut collected: Vec<usize> = Vec::new();
@@ -84,13 +82,10 @@ fn main() {
                     containers.sort_by(|a, b| {
                         a.len().cmp(&b.len())
                     });
-                    totals.push(containers.get(1).unwrap().iter().fold(1, |factor, value| factor * value));
+                    println!("{:?} {:?} {:?}", containers.get(1).unwrap().iter().fold(1, |total, value| total * value), containers.get(1).unwrap().len(), containers.get(2).unwrap().len());
                     break
                 }
             }
         }
     }
-
-    totals.sort();
-    println!("{:?}", totals);
 }
