@@ -49,8 +49,6 @@ fn main() {
             } else {
                 weights_copy.insert(0, collected.pop().unwrap());
             }
-
-            weights_copy = weights.clone();
             index += 1;
         } else {
             index = 0;
